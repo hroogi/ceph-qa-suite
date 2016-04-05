@@ -296,3 +296,54 @@ vc.disconnect()
         # List the dir's contents on mount A
         self.assertListEqual(self.mount_a.ls("parent1/mydir"),
                              ["afile"])
+
+    def test_purge(self):
+        """
+        Reproducer for #15266, exception trying to purge volumes that
+        contain non-ascii filenames.
+
+        Additionally test any other purge corner cases here.
+        """
+        # I'm going to leave mount_b unmounted and just use it as a handle for
+        # driving volumeclient.  It's a little hacky but we don't have a more
+        # general concept for librados/libcephfs clients as opposed to full
+        # blown mounting clients.
+        self.mount_b.umount_wait()
+        self._configure_vc_auth(self.mount_b, "manila")
+
+        group_id = "grpid"
+        volume_id = "volid"
+
+        # Create
+        mount_path = self._volume_client_python(self.mount_b, dedent("""
+            vp = VolumePath("{group_id}", "{volume_id}")
+            create_result = vc.create_volume(vp, 10)
+            print create_result['mount_path']
+        """.format(
+            group_id=group_id,
+            volume_id=volume_id
+        )))
+
+        # Strip leading "/"
+        mount_path = mount_path[1:]
+
+        # A file with non-ascii characters
+        self.mount_a.run_shell(["touch", os.path.join(mount_path, u"b\u00F6b")])
+
+        # A file with no permissions to do anything
+        self.mount_a.run_shell(["touch", os.path.join(mount_path, "noperms")])
+        self.mount_a.run_shell(["chmod", "0000", os.path.join(mount_path, "noperms")])
+
+        self._volume_client_python(self.mount_b, dedent("""
+            vp = VolumePath("{group_id}", "{volume_id}")
+            vc.delete_volume(vp)
+            vc.purge_volume(vp)
+        """.format(
+            group_id=group_id,
+            volume_id=volume_id
+        )))
+
+        # Check it's really gone
+        self.assertEqual(self.mount_a.ls("volumes/_deleting"), [])
+        self.assertEqual(self.mount_a.ls("volumes/"), ["_deleting", group_id])
+
