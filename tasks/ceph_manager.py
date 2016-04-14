@@ -436,10 +436,10 @@ class Thrasher:
             self.sighup_thread.get()
         if self.optrack_toggle_delay:
             self.log("joining the do_optrack_toggle greenlet")
-            self.optrack_toggle_thread.get()
+            self.optrack_toggle_thread.join()
         if self.dump_ops_enable == "true":
             self.log("joining the do_dump_ops greenlet")
-            self.dump_ops_thread.get()
+            self.dump_ops_thread.join()
         if self.noscrub_toggle_delay:
             self.log("joining the do_noscrub_toggle greenlet")
             self.noscrub_toggle_thread.get()
@@ -691,7 +691,7 @@ class Thrasher:
                 osd_state = "true"
             self.ceph_manager.raw_cluster_cmd_result('tell', 'osd.*',
                              'injectargs', '--osd_enable_op_tracker=%s' % osd_state)
-            time.sleep(delay)
+            gevent.sleep(delay)
 
     @log_exc
     def do_dump_ops(self):
@@ -708,6 +708,7 @@ class Thrasher:
                                      check_status=False, timeout=30)
                 self.ceph_manager.osd_admin_socket(osd, command=['dump_historic_ops'],
                                      check_status=False, timeout=30)
+            gevent.sleep(0)
 
     @log_exc
     def do_noscrub_toggle(self):
