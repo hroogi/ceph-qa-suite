@@ -442,7 +442,7 @@ class Thrasher:
             self.dump_ops_thread.join()
         if self.noscrub_toggle_delay:
             self.log("joining the do_noscrub_toggle greenlet")
-            self.noscrub_toggle_thread.get()
+            self.noscrub_toggle_thread.join()
 
     def grow_pool(self):
         """
@@ -733,7 +733,7 @@ class Thrasher:
             else:
                 self.ceph_manager.raw_cluster_cmd('osd', 'unset', 'nodeep-scrub')
                 scrub_state = "none"
-            time.sleep(delay)
+            gevent.sleep(delay)
 
     @log_exc
     def do_thrash(self):
