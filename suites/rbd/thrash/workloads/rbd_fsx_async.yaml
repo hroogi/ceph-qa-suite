@@ -1,0 +1,10 @@
+overrides:
+  ceph:
+    conf:
+      global:
+        filestore async threads : 6
+tasks:
+- async_setup:
+- rbd_fsx:
+    clients: [client.0]
+    ops: 6000

@@ -1,0 +1,11 @@
+overrides:
+  ceph:
+    conf:
+      global:
+        filestore async threads : 6
+tasks:
+- async_setup:
+- workunit:
+    clients:
+      client.0:
+        - cls/test_cls_rbd.sh

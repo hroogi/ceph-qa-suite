@@ -1,0 +1,14 @@
+exclude_arch: armv7l
+roles:
+- [mon.a, osd.0, osd.1, client.0]
+overrides:
+  ceph:
+    conf:
+      global:
+        filestore async threads : 6
+tasks:
+- install:
+- async_setup:
+- workunit:
+    clients:
+      all: [rbd/qemu-iotests.sh]

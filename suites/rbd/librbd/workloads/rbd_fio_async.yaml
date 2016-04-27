@@ -1,0 +1,16 @@
+overrides:
+  ceph:
+    conf:
+      global:
+        filestore async threads : 6
+tasks:
+- async_setup:
+- rbd_fio:
+    client.0:
+      fio-io-size: 80%
+      formats: [2]
+      features: [[layering],[layering,exclusive-lock,object-map]]
+      io-engine: rbd
+      test-clone-io: 1
+      rw: randrw
+      runtime: 900
